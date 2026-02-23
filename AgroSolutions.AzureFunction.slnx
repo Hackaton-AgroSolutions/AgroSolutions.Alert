@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AgroSolutions.AzureFunction.Domain/AgroSolutions.AzureFunction.Domain.csproj" />
+  <Project Path="AgroSolutions.AzureFunction.Functions/AgroSolutions.AzureFunction.Functions.csproj" />
+  <Project Path="AgroSolutions.AzureFunction.Infrastructure/AgroSolutions.AzureFunction.Infrastructure.csproj" />
+
+</Solution>
