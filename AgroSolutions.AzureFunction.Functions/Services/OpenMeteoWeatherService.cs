@@ -45,7 +45,7 @@ public class OpenMeteoWeatherService(IConfiguration configuration) : IWeatherSer
         {
             futureWeatherDatas.Add(
                 new(
-                Time: json["current"]!["time"]!.Value<DateTime>(),
+                Time: times![i]!.Value<DateTime>(),
                 Temperature: temps![i]!.Value<double>(),
                 Humidity: humidity![i]!.Value<double>(),
                 Precipitation: precipitation![i]!.Value<double>(),

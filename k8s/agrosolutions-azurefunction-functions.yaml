@@ -17,7 +17,14 @@ spec:
           image: marioguilhermedev/agrosolutions-azurefunction:latest
           ports:
             - containerPort: 80
+          env:
+            - name: RabbitMQConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: agrosolutions-azurefunction-config
+                  key: RabbitMQConnection
  
+
           envFrom:
           - configMapRef:
               name: agrosolutions-azurefunction-config
