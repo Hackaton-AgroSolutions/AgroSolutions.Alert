@@ -19,7 +19,8 @@ public class WeatherCollectorFunction(IInfluxDbService influxDb, IWeatherService
         (WeatherData currentWeather, IEnumerable<WeatherData> futureWeathers) = await _weatherService.GetCurrentAndFutureWeatherDataAsync();
 
         Log.Information("Sending current data weather with Time {Time} and Temperature {Temperature} to InfluxDb.", currentWeather.Time, currentWeather.Temperature);
-        PointData currentPoint = PointData.Measurement("weather_current")
+        PointData currentPoint = PointData
+            .Measurement("weather_current")
             .Tag("city", "sao_paulo")
             .Field("temperature", currentWeather.Temperature)
             .Field("humidity", currentWeather.Humidity)
@@ -33,7 +34,8 @@ public class WeatherCollectorFunction(IInfluxDbService influxDb, IWeatherService
         Log.Information("Sending {Total} future datas weather to InfluxDb.", futureWeathers.Count());
         foreach (WeatherData futureWeather in futureWeathers)
         {
-            PointData pointData = PointData.Measurement("weather_forecast")
+            PointData pointData = PointData
+                .Measurement("weather_forecast")
                 .Tag("city", "sao_paulo")
                 .Field("temperature", futureWeather.Temperature)
                 .Field("humidity", futureWeather.Humidity)

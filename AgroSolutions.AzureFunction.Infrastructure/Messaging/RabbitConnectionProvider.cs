@@ -13,7 +13,6 @@ public class RabbitConnectionProvider : IRabbitConnectionProvider
 
     public RabbitConnectionProvider(IOptions<RabbitMqOptions> options)
     {
-        Log.Information(JsonSerializer.Serialize(options.Value));
         _factory = new ConnectionFactory
         {
             HostName = options.Value.Host,
