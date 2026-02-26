@@ -30,13 +30,13 @@ public class SaveDataToInfluxFunction(IInfluxDbService influxDb)
                 return;
             }
 
-            Log.Information("Sendinng received data form sensor with ID {SensorClientId} and Field with ID {FieldId} to InfluxDb.", receivedSensorDataEvent.SensorClientId, receivedSensorDataEvent.FieldId);
             using (LogContext.PushProperty("CorrelationId", receivedSensorDataEvent.CorrelationId))
             {
+                Log.Information("Sendinng received data from sensor with ID {SensorClientId} and Field with ID {FieldId} to InfluxDb.", receivedSensorDataEvent.SensorClientId, receivedSensorDataEvent.FieldId);
                 PointData pointData = PointData
                     .Measurement("agro_sensors")
                     .Tag("sensor_client_id", receivedSensorDataEvent.SensorClientId.ToString())
-                    .Field("field_id", receivedSensorDataEvent.FieldId)
+                    .Tag("field_id", receivedSensorDataEvent.FieldId.ToString())
                     .Field("soil_moisture_percent", receivedSensorDataEvent.SoilMoisturePercent)
                     .Field("air_temperature_c", receivedSensorDataEvent.AirTemperatureC)
                     .Field("precipitation_mm", receivedSensorDataEvent.PrecipitationMm)
