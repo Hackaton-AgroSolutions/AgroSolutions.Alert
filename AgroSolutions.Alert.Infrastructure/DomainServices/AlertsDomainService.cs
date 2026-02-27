@@ -130,8 +130,11 @@ public class AlertsDomainService(IInfluxDbService influxDb) : IAlertsDomainServi
         "       |> filter(fn: (r) => r.city == \"sao_paulo\")"+
         "       |> filter(fn: (r) => r._field == \"rain_probability\")"+
         "       |> max()");
-        if (!(decimal.Parse(tables.SelectMany(t => t.Records).FirstOrDefault()?.Values["_value"].ToString() ?? "35") >= 35
-            && double.Parse(tablesWeather.SelectMany(t => t.Records).FirstOrDefault()?.Values["_value"].ToString() ?? "61") <= 60))
+
+        if (!(decimal.Parse(tables.SelectMany(t => t.Records).FirstOrDefault()?.Values["_value"].ToString() ?? "35") >= 35))
+            return false;
+
+        if (!(double.Parse(tablesWeather.SelectMany(t => t.Records).FirstOrDefault()?.Values["_value"].ToString() ?? "61") <= 60))
             return false;
 
         Log.Warning("The Sensor with Id {SensorClientId} in the Field with Id {FieldId} detected an upcoming heat wave.", receivedSensorDataEvent.SensorClientId, receivedSensorDataEvent.FieldId);
