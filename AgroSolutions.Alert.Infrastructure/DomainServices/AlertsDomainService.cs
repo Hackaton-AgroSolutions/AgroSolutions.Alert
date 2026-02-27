@@ -68,7 +68,7 @@ public class AlertsDomainService(IInfluxDbService influxDb) : IAlertsDomainServi
         IEnumerable<FluxTable> tables = await _influxDb.QueryAsync("temp =" +
         "    from(bucket: \"main-bucket\")" +
         "        |> range(start: -12h)"+
-        $"        |> filter(fn: (r) => r.sensor_client_id == \"{receivedSensorDataEvent.SensorClientId}\" and r._field == \"temperature\")"+
+        $"        |> filter(fn: (r) => r.sensor_client_id == \"{receivedSensorDataEvent.SensorClientId}\" and r._field == \"air_temperature_c\")" +
         "        |> mean()"+
 
         "    humidity = "+
