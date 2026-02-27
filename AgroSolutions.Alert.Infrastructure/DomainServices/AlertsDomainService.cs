@@ -65,24 +65,27 @@ public class AlertsDomainService(IInfluxDbService influxDb) : IAlertsDomainServi
     // Rule number 2: If the average temperature over the last 12 hours is between 22°C and 30°C and the average air humidity over the last 12 hours is greater than 80% → "Plague Risk"
     private async Task<bool> CheckPlagueRiskAsync(ReceivedSensorDataEvent receivedSensorDataEvent)
     {
-        IEnumerable<FluxTable> tables = await _influxDb.QueryAsync("temp =" +
+        IEnumerable<FluxTable> tables = await _influxDb.QueryAsync("temp = " +
         "    from(bucket: \"main-bucket\")" +
         "        |> range(start: -12h)"+
         $"        |> filter(fn: (r) => r.sensor_client_id == \"{receivedSensorDataEvent.SensorClientId}\" and r._field == \"air_temperature_c\")" +
         "        |> mean()"+
+        "        |> rename(columns: {_value: \"temp_value\"})" +
 
-        "    humidity = "+
-        "        from(bucket: \"main-bucket\")" +
-        "            |> range(start: -12h)"+
-        $"            |> filter(fn: (r) => r.sensor_client_id == \"{receivedSensorDataEvent.SensorClientId}\" and r._field == \"air_humidity_percent\")" +
-        "            |> mean()"+
+        "humidity = "+
+        "    from(bucket: \"main-bucket\")" +
+        "        |> range(start: -12h)"+
+        $"        |> filter(fn: (r) => r.sensor_client_id == \"{receivedSensorDataEvent.SensorClientId}\" and r._field == \"air_humidity_percent\")" +
+        "        |> mean()"+
+        "        |> rename(columns: {_value: \"humidity_value\"})"+
 
-        "    join(tables: {temp: temp, humidity: humidity}, on: [\"_start\",\"_stop\"])"+
-        "        |> map(fn: (r) => ({"+
-        "            _value: r.temp._value >= 22.0 and "+
-        "                    r.temp._value <= 30.0 and "+
-        "                    r.humidity._value > 80.0"+
-        "    }))");
+        "join(tables: {temp: temp, humidity: humidity}, on: [\"_start\",\"_stop\"])"+
+        "    |> map(fn: (r) => ({"+
+        "        _value: r.temp_value >= 22.0 and "+
+        "                r.temp_value <= 30.0 and "+
+        "                r.humidity_value > 80.0"+
+        "    }))"
+        );
 
         if (!tables.SelectMany(t => t.Records).Any())
             return false;
