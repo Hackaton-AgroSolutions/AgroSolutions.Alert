@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "AgroSolutions.Alert.Functions": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7031"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "containerRunArguments": "--init",
+      "httpPort": 33201,
+      "useSSL": false
+    }
+  }
+}

@@ -1,0 +1,250 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kong-db-pvc
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-db
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: kong-db
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kong-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kong-db
+  template:
+    metadata:
+      labels:
+        app: kong-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_DB
+              value: "kong"
+            - name: POSTGRES_USER
+              value: "kong"
+            - name: POSTGRES_PASSWORD
+              value: "kong"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: kong-db-storage
+      volumes:
+        - name: kong-db-storage
+          persistentVolumeClaim:
+            claimName: kong-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong
+spec:
+  selector:
+    app: kong
+  ports:
+    - name: admin
+      port: 8001
+      targetPort: 8001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kong
+  template:
+    metadata:
+      labels:
+        app: kong
+    spec:
+      initContainers:
+        - name: kong-migrations
+          image: kong:latest
+          env:
+            - name: KONG_DATABASE
+              value: "postgres"
+            - name: KONG_PG_HOST
+              value: "kong-db"
+            - name: KONG_PG_USER
+              value: "kong"
+            - name: KONG_PG_PASSWORD
+              value: "kong"
+            - name: KONG_PROXY_LISTEN
+              value: "0.0.0.0:8000"
+            - name: KONG_ADMIN_LISTEN
+              value: "0.0.0.0:8001"
+          command: ["kong", "migrations", "bootstrap"]
+      containers:
+        - name: kong
+          image: kong:latest
+          env:
+            - name: KONG_DATABASE
+              value: "postgres"
+            - name: KONG_PG_HOST
+              value: "kong-db"
+            - name: KONG_PG_USER
+              value: "kong"
+            - name: KONG_PG_PASSWORD
+              value: "kong"
+            - name: KONG_PROXY_LISTEN
+              value: "0.0.0.0:8000"
+            - name: KONG_ADMIN_LISTEN
+              value: "0.0.0.0:8001"
+          ports:
+            - containerPort: 8000
+            - containerPort: 8001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: konga
+spec:
+  selector:
+    app: konga
+  ports:
+    - port: 1337
+      targetPort: 1337
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: konga-seed-data
+data:
+  users.json: |
+    [
+      {
+        "username": "agrosolutions-admin-konga",
+        "email": "admin@agrosolutions.com",
+        "firstName": "Administrator",
+        "lastName": "AgroSolutions",
+        "node_id": "http://kong:8001",
+        "admin": true,
+        "active" : true,
+        "password": "agrosolutionsAdminKonga$$123"
+      }
+    ]
+  nodes.json: |
+    [
+      {
+        "name": "AgroSolutions",
+        "type": "key_auth",
+        "kong_admin_url": "http://kong:8001",
+        "kong_api_key": "^gQpL$80rA16w%h!",
+        "health_checks": false,
+        "active": true
+      }
+    ]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: konga
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: konga
+  template:
+    metadata:
+      labels:
+        app: konga
+    spec:
+      initContainers:
+        - name: wait-for-kong
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z kong 8001; do sleep 5; done
+
+        - name: wait-for-definitions
+          image: curlimages/curl:8.2.1
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Kong Admin..."
+              until curl -s http://kong:8001; do sleep 5; done
+              
+              echo "Creating Service, Route and Plugin for identity-service"
+              curl -i -X POST http://kong:8001/services \
+                --data "name=identity-service" \
+                --data "url=http://agrosolutions-identity-api"
+              curl -i -X POST http://kong:8001/services/identity-service/routes \
+                --data "paths[]=~/identity/(?<remainder>.*)" \
+                --data "methods[]=GET" \
+                --data "methods[]=POST" \
+                --data "methods[]=PATCH" \
+                --data "methods[]=DELETE"
+              curl -i -X POST http://kong:8001/services/identity-service/plugins \
+                --data "name=request-transformer" \
+                --data 'config.replace.uri=/$(uri_captures["remainder"])'
+              
+              echo "Creating Service, Route and Plugin for property-service"
+              curl -i -X POST http://kong:8001/services \
+                --data "name=property-service" \
+                --data "url=http://agrosolutions-property-api"
+              curl -i -X POST http://kong:8001/services/property-service/routes \
+                --data "paths[]=~/property/(?<remainder>.*)" \
+                --data "methods[]=GET" \
+                --data "methods[]=POST" \
+                --data "methods[]=PATCH" \
+                --data "methods[]=DELETE"
+              curl -i -X POST http://kong:8001/services/property-service/plugins \
+                --data "name=request-transformer" \
+                --data 'config.replace.uri=/$(uri_captures["remainder"])'
+              
+              echo "Creating Service, Route and Plugin for ingest-service"
+              curl -i -X POST http://kong:8001/services \
+                --data "name=ingest-service" \
+                --data "url=http://agrosolutions-ingest-api"
+              curl -i -X POST http://kong:8001/services/ingest-service/routes \
+                --data "paths[]=~/ingest/(?<remainder>.*)" \
+                --data "methods[]=POST"
+              curl -i -X POST http://kong:8001/services/ingest-service/plugins \
+                --data "name=request-transformer" \
+                --data 'config.replace.uri=/$(uri_captures["remainder"])'
+      containers:
+        - name: konga
+          image: pantsel/konga:latest
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: KONGA_SEED_USER_DATA_SOURCE_FILE
+              value: "/seed/users.json"
+            - name: KONGA_SEED_KONG_NODE_DATA_SOURCE_FILE
+              value: "/seed/nodes.json"
+          volumeMounts:
+            - name: seed-volume
+              mountPath: /seed
+      volumes:
+        - name: seed-volume
+          configMap:
+            name: konga-seed-data
+            items:
+              - key: users.json
+                path: users.json
+              - key: nodes.json
+                path: nodes.json

@@ -23,7 +23,9 @@ spec:
                 configMapKeyRef:
                   name: agrosolutions-azurefunction-config
                   key: RabbitMQConnection
- 
+
+            - name: AzureWebJobsStorage
+              value: "DefaultEndpointsProtocol=https;AccountName=teste343454352345;AccountKey=UTp6KJsIHFisLZphkQtqUNf2Kr9HFtyB7qbJ4E+zjBSu/Yg5NiQfyIEOnZc+OmBXE/BR6E7BphyN+AStkOmwRg==;EndpointSuffix=core.windows.net"
 
           envFrom:
           - configMapRef:

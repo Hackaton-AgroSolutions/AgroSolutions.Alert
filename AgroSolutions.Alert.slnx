@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/k8s/">
+    <File Path="k8s/agrosolutions-azurefunction-az.yaml" />
+    <File Path="k8s/agrosolutions-azurefunction-configmap.yaml" />
+    <File Path="k8s/agrosolutions-azurefunction-hpa.yaml" />
+    <File Path="k8s/agrosolutions-azurefunction-secret.yaml" />
+    <File Path="k8s/agrosolutions-azurefunction-service.yaml" />
+    <File Path="k8s/grafana.yaml" />
+    <File Path="k8s/kong &amp; konga.yaml" />
+    <File Path="k8s/loki.yaml" />
+    <File Path="k8s/prometheus.yaml" />
+  </Folder>
+  <Project Path="AgroSolutions.Alert.Domain/AgroSolutions.Alert.Domain.csproj" />
+  <Project Path="AgroSolutions.Alert.Functions/AgroSolutions.Alert.Functions.csproj" />
+  <Project Path="AgroSolutions.Alert.Infrastructure/AgroSolutions.Alert.Infrastructure.csproj" />
+</Solution>
