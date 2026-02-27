@@ -74,7 +74,7 @@ public class AlertsDomainService(IInfluxDbService influxDb) : IAlertsDomainServi
         "    humidity = "+
         "        from(bucket: \"main-bucket\")" +
         "            |> range(start: -12h)"+
-        $"            |> filter(fn: (r) => r.sensor_client_id == \"{receivedSensorDataEvent.SensorClientId}\" and r._field == \"humidity\")"+
+        $"            |> filter(fn: (r) => r.sensor_client_id == \"{receivedSensorDataEvent.SensorClientId}\" and r._field == \"air_humidity_percent\")" +
         "            |> mean()"+
 
         "    join(tables: {temp: temp, humidity: humidity}, on: [\"_start\",\"_stop\"])"+
@@ -122,7 +122,7 @@ public class AlertsDomainService(IInfluxDbService influxDb) : IAlertsDomainServi
         return true;
     }
 
-    // Rule number 4: If the air temperature is above 35°C for 3 consecutive days and no have chanfe of rain in nexts 24 hours → "Heat Wave – Potential Impact on Production"
+    // Rule number 4: If the air temperature is above 35°C for 3 consecutive days and the probability of rain in the next 24 hours does not exceed 60% → "Heat wave – Potential impact on production"
     private async Task<bool> CheckHeatWaveAsync(ReceivedSensorDataEvent receivedSensorDataEvent)
     {
         IEnumerable<FluxTable> tables = await _influxDb.QueryAsync("from(bucket: \"main-bucket\")"+
