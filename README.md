@@ -1,5 +1,5 @@
 # 📦 AgroSolutions.Alert
-> As Funções do Azure, desenvolvidas no Hackathon da AgroSolutions, mantêm o contexto Serverless para o ambiente Azure com ações assíncronas.
+> O serviço de Alerta AgroSolutions Hackathon mantém o contexto dos Alertas e Dashboards para status gerais de cada talhão e sensor.
 
 ## 🚜 Funcionalidades
   - Processar dados dos sensores;
